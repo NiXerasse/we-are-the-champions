@@ -6,7 +6,7 @@ html, body {
 
 #main {
     margin: 0 auto;
-    max-width: 600px;
+    max-width: 400px;
     padding: 50px 40px 50px 40px;
     display: flex;
     flex-direction: column;

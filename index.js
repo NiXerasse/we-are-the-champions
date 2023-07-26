@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js"
-import { getDatabase, ref, onValue, push } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js"
+import { getDatabase, ref, onValue, push, update } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js"
 
 const appConfig = {
     databaseURL: "https://we-are-the-champions-a130a-default-rtdb.europe-west1.firebasedatabase.app/"
@@ -16,10 +16,33 @@ const endorsementsEl = document.getElementById("endorsements")
 const publishBtnEl = document.getElementById("publish-btn")
 
 publishBtnEl.addEventListener("click", function () {
-
-    console.log("Clicked...")
-
+    if (!isValidInput()) {
+        return
+    }
+    const newEndorsement = {
+        to: toInputEl.value,
+        from: fromInputEl.value,
+        text: endorsementInputEl.value,
+        likes: 0,
+    }
+    push(endorsementsDB, JSON.stringify(newEndorsement))
 })
+
+function isValidInput() {
+    if (!endorsementInputEl.value || endorsementInputEl.value === "Write your endorsement here") {
+        endorsementInputEl.focus()
+        return
+    }
+    if (!fromInputEl || fromInputEl.value === "From") {
+        fromInputEl.focus()
+        return false
+    }
+    if (!toInputEl || toInputEl.value === "To") {
+        toInputEl.focus()
+        return false
+    }
+    return true
+}
 
 onValue(endorsementsDB, function (snapshot) {
     clearEndorsements()
@@ -28,14 +51,8 @@ onValue(endorsementsDB, function (snapshot) {
     }
     
     const dbEntries = Object.entries(snapshot.val())
-    console.log(dbEntries)
-    for (let i = 0; i < dbEntries.length; i++) {
-        const entryId = dbEntries[i][0]
-        const entryData = JSON.parse(dbEntries[i][1])
-        const newEndorsementEl = createEndorsementEl(entryData, function () {
-            console.log("Entry clicked")
-        })
-        endorsementsEl.appendChild(newEndorsementEl)
+    for (let i = dbEntries.length - 1; i >= 0; i--) {
+        addEndorsementFromDatabaseToDOM(dbEntries[i])
     }
 })
 
@@ -43,10 +60,36 @@ function clearEndorsements() {
     endorsementsEl.innerHTML = ""
 }
 
+function addEndorsementFromDatabaseToDOM(dbEntry) {
+    const entryId = dbEntry[0]
+    const entryData = JSON.parse(dbEntry[1])
+    const newEndorsementEl = createEndorsementEl(entryData, function () {
+        processLikeCount(dbEntry)
+    })
+    endorsementsEl.append(newEndorsementEl)    
+}
+
+function processLikeCount(dbEntry) {
+    const entryId = dbEntry[0]
+    const entryData = JSON.parse(dbEntry[1])
+
+    if (localStorage.getItem(entryId)) {
+        localStorage.removeItem(entryId)
+        entryData.likes -= 1
+    } else {
+        localStorage.setItem(entryId, "liked")
+        entryData.likes += 1
+    }
+
+    const updates = {}
+    updates[`endorsements/${entryId}`] = JSON.stringify(entryData)
+    update(ref(database), updates)
+}
+
 function createEndorsementEl(data, onClick) {
-    let endorsmentEl = document.createElement("div")
-    endorsementsEl.className = "endorsement"
-    endorsementsEl.innerHTML = `
+    let endorsementEl = document.createElement("div")
+    endorsementEl.className = "endorsement"
+    endorsementEl.innerHTML = `
         <h3>To ${data.to}</h3>
         <p>${data.text}</p>
         <div class="endorsement-footer">
@@ -54,15 +97,6 @@ function createEndorsementEl(data, onClick) {
             <h3 class="like-entry">🖤 ${data.likes}</h3>
         </div>
     `
-    endorsmentEl.addEventListener("click", onClick)
-    return endorsementsEl
+    endorsementEl.addEventListener("click", onClick)
+    return endorsementEl
 }
-
-// let endorsement = {
-//     to: "Abdellah",
-//     from: "Sindre",
-//     text: "That transcription feature you completed for Scrimba 3.0 is amazing. I know you’ve been working hard on it for several months now. 👏👏👏 Really good work 🙌",
-//     likes: 7,
-// }
-
-// push(endorsementsDB, JSON.stringify(endorsement))

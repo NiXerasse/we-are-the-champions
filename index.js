@@ -29,15 +29,15 @@ publishBtnEl.addEventListener("click", function () {
 })
 
 function isValidInput() {
-    if (!endorsementInputEl.value || endorsementInputEl.value === "Write your endorsement here") {
+    if (!endorsementInputEl.value) {
         endorsementInputEl.focus()
         return
     }
-    if (!fromInputEl || fromInputEl.value === "From") {
+    if (!fromInputEl.value) {
         fromInputEl.focus()
         return false
     }
-    if (!toInputEl || toInputEl.value === "To") {
+    if (!toInputEl.value) {
         toInputEl.focus()
         return false
     }

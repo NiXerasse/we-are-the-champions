@@ -26,7 +26,14 @@ publishBtnEl.addEventListener("click", function () {
         likes: 0,
     }
     push(endorsementsDB, JSON.stringify(newEndorsement))
+    clearInputFields()
 })
+
+function clearInputFields() {
+    endorsementInputEl.value = ""
+    fromInputEl.value = ""
+    toInputEl.value = ""
+}
 
 function isValidInput() {
     if (!endorsementInputEl.value) {
